@@ -1,86 +1,35 @@
-import axios, { AxiosInstance } from 'axios';
-import cheerio from 'cheerio';
-import { RaceStage } from './interfaces/raceStage';
-import { getMonthFromString } from './utils/date';
+import { RaceCalendar } from "./interfaces/race";
+import { getCalendarData } from "./scraper/calendarScraper";
 
+const RACE_YEARS: number[] = [2020, 2021, 2022];
+const RACE_CALENDARS: RaceCalendar[] = [];
 
-const TARGET_SCRAPER_URL: string = 'https://www.formula1.com/en/racing/2020.html';
-const axiosInstance: AxiosInstance = axios.create();
-const BLACKLISTED_TERMS: string[] = ['TESTING', 'ESPORTS'];
+async function startDataIngestion() {
 
-axiosInstance.get(TARGET_SCRAPER_URL)
-    .then(
-        response => {
-            getRaceStages(response.data);
-        }
-    )
-    .catch(console.error);
+    for (let i = 0; i < RACE_YEARS.length; i++) {
+        const year = RACE_YEARS[i];
 
-function getRaceStages(html: string): void {
-    if (html === undefined || html === null) {
-        console.log('No HTML provided.');
-    }
+        console.log(`Starting scrape for year ${year}`);
+        const stages = await getCalendarData(year);
 
-    const $ = cheerio.load(html);
-    const originalRaceStages: cheerio.Cheerio = $('.event-item');
-
-    let scheduleYear: number | undefined;
-    const raceStages: RaceStage[] = [];
-
-    originalRaceStages.each((i, element) => {
-        const stage: string = $(element).find('.card-title').text();
-
-        if (BLACKLISTED_TERMS.some((term) => stage.includes(term))) {
-            return;
-        }
-
-        if (scheduleYear === undefined) {   
-            const raceTitle = $(element).find('.event-title.f1--xxs').text().split(' ');
-            scheduleYear = parseInt(raceTitle[raceTitle.length - 1]);
-        }
-
-        const location: string = $(element).find('.event-place').text().trim();
-        const startDay: number = parseInt($(element).find('.date-month > p > .start-date').text());
-        const endDay: number = parseInt($(element).find('.date-month > p > .end-date').text());
-        const month: string = $(element).find('.month-wrapper').text();
-
-        const stageDates = calculateStageStartAndEnd(startDay, endDay, month, scheduleYear);
-
-        raceStages.push({
-            stage: parseInt(stage.replace('ROUND', '').trim()),
-            location,
-            startAt: stageDates[0],
-            endAt: stageDates[1],
+        console.log(`Retrieved stage data for year ${year}`);
+        RACE_CALENDARS.push({
+            year,
+            totalStages: stages.length,
+            stages,
         });
-    });
-
-    raceStages.forEach((stage) => console.log(stage));
-}
-
-function calculateStageStartAndEnd(startDay: number, endDay: number, month: string, year: number): Date[] {
-    if (month.includes('-')) {
-        const months: string[] = month.split('-');
-        const startMonth: number | undefined = getMonthFromString(months[0]);
-        const endMonth: number | undefined = getMonthFromString(months[1]);
-
-        if (startMonth === undefined || endMonth === undefined) {
-            throw Error('Could not calculate appropriate month value');
-        }
-
-        return [
-            new Date(year, startMonth, startDay, 0, 0, 0),
-            new Date(year, endMonth, endDay, 23, 59, 59),
-        ];
-    } else {
-        const convertedMonth = getMonthFromString(month);
-
-        if (convertedMonth === undefined) {
-            throw Error('Could not calculate appropriate month value');
-        }
-
-        return [
-            new Date(year, convertedMonth, startDay, 0, 0, 0),
-            new Date(year, convertedMonth, endDay, 23, 59, 59),
-        ];
     }
+
+    RACE_CALENDARS.forEach((calendar) => {
+        console.log('==========================');
+        console.log(`##### YEAR: ${calendar.year} #####`);
+        calendar.stages.forEach(currentStage => {
+            console.log(`ROUND: ${currentStage.stage}`);
+            console.log(`LOCATION: ${currentStage.location}`);
+            console.log(`RUNNING BETWEEN ${currentStage.startAt.toLocaleDateString()} - ${currentStage.endAt.toLocaleDateString()}`);
+            console.log('');
+        });
+    })
 }
+
+startDataIngestion();

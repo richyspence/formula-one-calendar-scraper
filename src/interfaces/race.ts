@@ -4,3 +4,9 @@ export interface RaceStage {
     startAt: Date;
     endAt: Date;
 }
+
+export interface RaceCalendar {
+    year: number;
+    totalStages: number;
+    stages: RaceStage[];
+}
