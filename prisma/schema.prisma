@@ -30,6 +30,7 @@ model Stage {
   id            Int @id @default(autoincrement())
   title         String
   stage_number  Int
+  location      String
   starts_on     DateTime
   ends_on       DateTime
   details_url   String

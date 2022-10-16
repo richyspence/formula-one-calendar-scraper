@@ -10,6 +10,7 @@ export async function createMultipleStages(stages: RaceStage[], calendarId: numb
             stage_number: currentStage.stage,
             starts_on: currentStage.startAt,
             ends_on: currentStage.endAt,
+            location: currentStage.location,
             details_url: currentStage.detailsLink,
             calendar_id: calendarId,
         }
