@@ -1,0 +1,47 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+  output   = "./calendar-diagram.svg"
+  theme    = "forest"
+}
+
+model Calendar {
+  id                Int @id @default(autoincrement())
+  year              Int
+  number_of_stages  Int
+
+  stage             Stage[]
+
+  @@map("calendars")
+}
+
+model Stage {
+  id            Int @id @default(autoincrement())
+  title         String
+  starts_on     DateTime
+  ends_on       DateTime
+  details_url   String
+  calendar_id   Int
+
+  calendar      Calendar @relation(fields: [calendar_id], references: [id])
+
+  @@map("stages")
+}
+
+model RaceDayType {
+  id            Int @id @default(autoincrement())
+  name          String
+
+  @@map("racedaytypes")
+}
