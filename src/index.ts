@@ -1,9 +1,10 @@
 import { EventEmitter } from "stream";
 import { DetailedRaceStage, RaceCalendar } from "./interfaces/race";
 import { getCalendarData, getStageDetails } from "./scraper/calendarScraper";
+import { createCalendar } from "./services/calendarService";
+import { createMultipleStages } from "./services/stageService";
 
-const RACE_YEARS: number[] = [2022];
-const RACE_CALENDARS: RaceCalendar[] = [];
+const RACE_YEARS: number[] = [2020, 2021, 2022];
 
 EventEmitter.setMaxListeners(30);
 
@@ -12,8 +13,21 @@ async function startDataIngestion() {
     for (let i = 0; i < RACE_YEARS.length; i++) {
         const year = RACE_YEARS[i];
 
-        console.log(`Starting scrape for year ${year}`);
+        console.log(`>> Starting scrape for F1 calendar [${year}]`);
+        
         const stages = await getCalendarData(year);
+        
+        console.log(`>> Retrieved basic stage info [${year}]`);
+        console.log(`>> Creating calendar in db [${year}]`);
+        
+        const calendarId = await createCalendar(year, stages.length);
+        
+        console.log(`>> Created calendar [${year}]`);
+        console.log(`>> Creating stages in db [${year}]`);
+
+        await createMultipleStages(stages, calendarId);
+        
+        console.log(`>> Created stages for calendar [${year}]`);
 
         const detailedStages: DetailedRaceStage[] = await Promise.all(stages.map(async (currentStage) => {
             const detailedData = await getStageDetails(currentStage.detailsLink);
@@ -27,31 +41,8 @@ async function startDataIngestion() {
             };
         }));
 
-        console.log(`Retrieved stage data for year ${year}`);
-        RACE_CALENDARS.push({
-            year,
-            totalStages: stages.length,
-            stages: detailedStages,
-        });
+        console.log(`>> Completed data scrape [${year}]`);
     }
-
-    RACE_CALENDARS.forEach((calendar) => {
-        console.log('==========================');
-        console.log(`##### YEAR: ${calendar.year} #####`);
-        calendar.stages.forEach(currentStage => {
-            console.log(`ROUND: ${currentStage.stage}`);
-            console.log(`LOCATION: ${currentStage.location}`);
-            console.log(`RUNNING BETWEEN: ${currentStage.startAt.toLocaleDateString()} - ${currentStage.endAt.toLocaleDateString()}`);
-            
-            currentStage.days.forEach(day => {
-                console.log(`DAY: ${day.date.toLocaleDateString()}`);
-                console.log(`TYPE: ${day.type}`);
-            });
-
-            console.log('==========================');
-            console.log('');
-        });
-    })
 }
 
 startDataIngestion();

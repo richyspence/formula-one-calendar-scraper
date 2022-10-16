@@ -1,7 +1,7 @@
-import { DayDetails, DayType, DetailedRaceStage, RaceStage } from "../interfaces/race";
+import { DayDetails, DayType, RaceStage } from "../interfaces/race";
 import cheerio from "cheerio";
 import { getMonthFromString } from "../utils/date";
-import { getStageData, getStageDetailedData } from "../services/calendarService";
+import { getStageData, getStageDetailedData } from "../services/scraperService";
 
 const BLACKLISTED_TERMS: string[] = ['TESTING', 'ESPORTS'];
 

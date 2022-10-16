@@ -1,38 +1,39 @@
-import axios, { AxiosInstance } from "axios";
-import puppeteer from "puppeteer";
+import { PrismaClient } from "@prisma/client";
 
-const TARGET_URL: string = 'https://www.formula1.com/en/racing/';
-const httpClient: AxiosInstance = axios.create();
+const prisma = new PrismaClient();
 
-export async function getStageData(targetYear: number): Promise<string> {
-    const response = await httpClient.get(TARGET_URL.concat(targetYear.toString(), '.html'));
+export async function createCalendar(year: number, numberOfStages: number): Promise<number> {
+    let calendarId: number;
 
-    if(response.status !== 200) {
-        throw new Error(`Could not retrieve page contents for year ${targetYear}`);
-    }
-
-    if (response.data === undefined || response.data === null) {
-        throw new Error(`No page data for the year ${targetYear}`);
-    }
-
-    return response.data;
-}
-
-export async function getStageDetailedData(url: string) {
-    const browserInstance = await puppeteer.launch();
-    const targetPage = await browserInstance.newPage();
-    await targetPage.goto(TARGET_URL.replace('/en/racing/', url));
-    await targetPage.waitForNetworkIdle({
-        idleTime: 0,
+    const specifiedCalendar = await prisma.calendar.findFirst({
+        where: {
+            year: year,
+            number_of_stages: numberOfStages,
+        }
     });
 
-    const response = await targetPage.content();
+    if (specifiedCalendar) {
+        await prisma.calendar.update({
+            where: {
+                id: specifiedCalendar.id,
+            },
+            data: {
+                year: year,
+                number_of_stages: numberOfStages,
+            }
+        });
 
-    browserInstance.close();
+        calendarId = specifiedCalendar.id;
+    } else {
+        const createdCalendar = await prisma.calendar.create({
+            data: {
+                year: year,
+                number_of_stages: numberOfStages,
+            },
+        });
 
-    if (response === undefined || response === null) {
-        throw new Error(`No data for the stage ${url}`);
+        calendarId = createdCalendar.id;
     }
 
-    return response;
+    return calendarId;
 }

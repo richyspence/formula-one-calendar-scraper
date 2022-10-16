@@ -8,8 +8,10 @@ This small node.js solution effectively scrapes the F1 calendar from [Formula On
 - [x] Update scraper to retrieve stage day info
 - [x] Add in database
 - [x] Update to include saving basic scraped data to database
-- [ ] Update to ensure no duplicate data is added
+- [x] Update to ensure no duplicate data is added
 - [ ] Expand saving data to include stage day info
+- [ ] Look into what other data could be scraped and stored?
+- [ ] Tests?
 
 ## Getting Started :computer:
 You will want the following installed before starting:
