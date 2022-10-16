@@ -1,14 +1,17 @@
 import { EventEmitter } from "stream";
 import { DetailedRaceStage, RaceCalendar } from "./interfaces/race";
 import { getCalendarData, getStageDetails } from "./scraper/calendarScraper";
+import { getRaceTeamData } from "./scraper/teamScraper";
 import { createCalendar } from "./services/calendarService";
+import { createDriver } from "./services/driverService";
 import { createMultipleStages } from "./services/stageService";
+import { createTeam } from "./services/teamService";
 
 const RACE_YEARS: number[] = [2020, 2021, 2022];
 
 EventEmitter.setMaxListeners(30);
 
-async function startDataIngestion() {
+async function startCalendarIngestion() {
 
     for (let i = 0; i < RACE_YEARS.length; i++) {
         const year = RACE_YEARS[i];
@@ -40,9 +43,33 @@ async function startDataIngestion() {
                 days: detailedData,
             };
         }));
-
-        console.log(`>> Completed data scrape [${year}]`);
     }
 }
 
-startDataIngestion();
+async function startTeamIngestion() {
+    console.log('>> Starting scrape for F1 Team data');
+
+    const racingTeams = await getRaceTeamData();
+
+    console.log('>> Retrieved scrape of team data');
+    console.log('>> Creating teams in db');
+
+    racingTeams.forEach(async (team) => {
+        const { name, logoUrl } = team;
+        const teamId = await createTeam(name, logoUrl);
+
+        console.log(`>> Creating drivers for ${team.name} in db`);
+
+        team.drivers.forEach(async (driver) => {
+            const { firstName, lastName } = driver;
+            await createDriver(firstName, lastName, teamId);
+        });
+
+        console.log(`>> Drivers have been created in db for ${team.name}`);
+    });
+
+    console.log('>> Team scrape is complete');
+}
+
+startCalendarIngestion();
+startTeamIngestion();

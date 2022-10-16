@@ -40,6 +40,26 @@ model Stage {
   @@map("stages")
 }
 
+model Team {
+  id            Int @id @default(autoincrement())
+  name          String
+  logo_url      String
+
+  driver        Driver[]
+  @@map("teams")
+}
+
+model Driver {
+  id            Int @id @default(autoincrement())
+  first_name    String
+  last_name     String
+  team_id       Int
+
+  team          Team @relation(fields: [team_id], references: [id])
+
+  @@map("drivers")
+}
+
 model RaceDayType {
   id            Int @id @default(autoincrement())
   name          String
