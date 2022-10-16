@@ -1,9 +1,17 @@
 # F1 Calendar Scraper
 
-## What it is
+## What it is :rocket:
 This small node.js solution effectively scrapes the F1 calendar from [Formula One](https://www.formula1.com/) using a mixture of `Axios` and `Puppeteer`. A third party HTML parser called `Cheerio` is also in use.
 
-## Getting Started
+## Remaining Tasks :construction:
+- [x] Create basic scraper to get calendar stages
+- [x] Update scraper to retrieve stage day info
+- [x] Add in database
+- [x] Update to include saving basic scraped data to database
+- [ ] Update to ensure no duplicate data is added
+- [ ] Expand saving data to include stage day info
+
+## Getting Started :computer:
 You will want the following installed before starting:
 - NodeJS installed
 - Docker installed (for ease of use)
@@ -15,7 +23,7 @@ You will want the following installed before starting:
 4. Run `npm run db:local:start`. This will start a new docker container with Postgres installed and will run the database migrations from `./prisma/migrations` against the database docker container. You should be able to see the database and its tables if you connect to localhost using your chosen database viewer after this step.
 6. Run `npm run start:dev`. This will kick off the scraping process.
 
-## Database ERD
+## Database ERD :eyes:
 The image below illustrates the most up-to-date view of the database.
 
 ![](./prisma/calendar-diagram.svg)
