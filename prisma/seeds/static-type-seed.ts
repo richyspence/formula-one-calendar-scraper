@@ -12,18 +12,15 @@ const RACE_DAY_TYPES = [
 ];
 
 async function main() {
-    RACE_DAY_TYPES.forEach((type) => {
-        prisma.raceDayType.upsert({
+    RACE_DAY_TYPES.forEach(async (type) => {
+        await prisma.raceDayType.upsert({
             where: {
                 id: type.id,
             },
             update: {
                 name: type.name,
             },
-            create: {
-                id: type.id,
-                name: type.name,
-            },
+            create: type,
         });
     });
 }
