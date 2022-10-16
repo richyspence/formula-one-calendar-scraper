@@ -29,6 +29,7 @@ model Calendar {
 model Stage {
   id            Int @id @default(autoincrement())
   title         String
+  stage_number  Int
   starts_on     DateTime
   ends_on       DateTime
   details_url   String

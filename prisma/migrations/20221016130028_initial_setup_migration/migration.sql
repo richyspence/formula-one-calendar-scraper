@@ -11,6 +11,7 @@ CREATE TABLE "calendars" (
 CREATE TABLE "stages" (
     "id" SERIAL NOT NULL,
     "title" TEXT NOT NULL,
+    "stage_number" INTEGER NOT NULL,
     "starts_on" TIMESTAMP(3) NOT NULL,
     "ends_on" TIMESTAMP(3) NOT NULL,
     "details_url" TEXT NOT NULL,

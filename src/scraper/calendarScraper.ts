@@ -32,10 +32,12 @@ function getRacingStages(html: string): RaceStage[] {
            scheduleYear = getCurrentRaceYear($, element);
         }
 
-        const detailsLink: string | undefined = $(element).attr('href');
+        let detailsLink: string | undefined = $(element).attr('href');
         
         if (detailsLink === undefined) {
             throw new Error(`A details link was not available for ${currentRound}`);
+        } else {
+            detailsLink = 'https://www.formula1.com' + detailsLink;
         }
 
         const currentLocation: string = $(element).find('.event-place').text().trim();

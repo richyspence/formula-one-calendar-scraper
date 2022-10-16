@@ -21,7 +21,7 @@ export async function getStageData(targetYear: number): Promise<string> {
 export async function getStageDetailedData(url: string) {
     const browserInstance = await puppeteer.launch();
     const targetPage = await browserInstance.newPage();
-    await targetPage.goto(TARGET_URL.replace('/en/racing/', url));
+    await targetPage.goto(url);
     await targetPage.waitForNetworkIdle({
         idleTime: 0,
     });

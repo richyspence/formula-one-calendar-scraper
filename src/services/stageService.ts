@@ -7,6 +7,7 @@ export async function createMultipleStages(stages: RaceStage[], calendarId: numb
     const mappedStages = stages.map((currentStage) => {
         return {
             title: `Round ${currentStage.stage}`,
+            stage_number: currentStage.stage,
             starts_on: currentStage.startAt,
             ends_on: currentStage.endAt,
             details_url: currentStage.detailsLink,
@@ -15,7 +16,7 @@ export async function createMultipleStages(stages: RaceStage[], calendarId: numb
     });
 
     mappedStages.forEach(async (stage) => {
-        const specifiedStage = await getStageByRoundAndCalendar(stage.title, calendarId);
+        const specifiedStage = await getStageByRoundAndCalendar(stage.stage_number, calendarId);
 
         if (!specifiedStage) {
             await prisma.stage.create({
@@ -32,10 +33,10 @@ export async function createMultipleStages(stages: RaceStage[], calendarId: numb
     });
 }
 
-export async function getStageByRoundAndCalendar(stage: string, calendarId: number): Promise<Stage | null> {
+export async function getStageByRoundAndCalendar(stage: number, calendarId: number): Promise<Stage | null> {
     return await prisma.stage.findFirst({
         where: {
-            title: stage,
+            stage_number: stage,
             calendar_id: calendarId,
         },
     });
