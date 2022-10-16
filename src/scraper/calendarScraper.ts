@@ -1,25 +1,13 @@
-import axios, { AxiosInstance } from "axios";
-import { RaceStage } from "../interfaces/race";
+import { DayDetails, DayType, DetailedRaceStage, RaceStage } from "../interfaces/race";
 import cheerio from "cheerio";
 import { getMonthFromString } from "../utils/date";
+import { getStageData, getStageDetailedData } from "../services/calendarService";
 
-const TARGET_URL: string = 'https://www.formula1.com/en/racing/';
 const BLACKLISTED_TERMS: string[] = ['TESTING', 'ESPORTS'];
 
-const httpClient: AxiosInstance = axios.create();
-
-export async function getCalendarData(targetYear: number) {
-    const response = await httpClient.get(TARGET_URL.concat(targetYear.toString(), '.html'));
-
-    if(response.status !== 200) {
-        throw new Error(`Could not retrieve page contents for year ${targetYear}`);
-    }
-
-    if (response.data === undefined || response.data === null) {
-        throw new Error(`No page data for the year ${targetYear}`);
-    }
-
-    return getRacingStages(response.data);
+export async function getCalendarData(targetYear: number): Promise<RaceStage[]> {
+    const calendarData = await getStageData(targetYear);
+    return getRacingStages(calendarData);
 }
 
 function getRacingStages(html: string): RaceStage[] {
@@ -31,7 +19,7 @@ function getRacingStages(html: string): RaceStage[] {
     const raceStages: RaceStage[] = [];
 
     const $ = cheerio.load(html);
-    const races: cheerio.Cheerio = $('.event-item');
+    const races: cheerio.Cheerio = $('.event-item-wrapper');
 
     races.each((i, element) => {
         const currentRound: string = $(element).find('.card-title').text();
@@ -42,6 +30,12 @@ function getRacingStages(html: string): RaceStage[] {
 
         if (scheduleYear === undefined) {
            scheduleYear = getCurrentRaceYear($, element);
+        }
+
+        const detailsLink: string | undefined = $(element).attr('href');
+        
+        if (detailsLink === undefined) {
+            throw new Error(`A details link was not available for ${currentRound}`);
         }
 
         const currentLocation: string = $(element).find('.event-place').text().trim();
@@ -57,6 +51,7 @@ function getRacingStages(html: string): RaceStage[] {
             location: currentLocation,
             startAt: startingDate,
             endAt: endingDate,
+            detailsLink,
         });
     });
 
@@ -96,3 +91,68 @@ function getStageStartEndDates(start: number, end: number, month: string, year: 
     ];
 }
 
+function getRaceDay(day: number, month: string, year: number): Date {
+    const convertedMonth = getMonthFromString(month);
+
+    if (convertedMonth === undefined) {
+        throw Error('Could not calculate an appropriate month value');
+    }
+
+    return new Date(year, convertedMonth, day, 0, 0, 0);
+}
+
+export async function getStageDetails(url: string): Promise<DayDetails[]> {
+    const detailedStageData = await getStageDetailedData(url);
+    return getStageDayData(detailedStageData);
+}
+
+function getDayType(title: string): DayType {
+    let specifiedType: DayType;
+    switch(title) {
+        case "Race":
+            specifiedType = DayType.Race;
+            break;
+        case "Sprint":
+            specifiedType = DayType.Sprint;
+            break;
+        case "Qualifying":
+            specifiedType = DayType.Qualifying;
+            break;
+        case "Practice 1":
+            specifiedType = DayType.Practice1;
+            break;
+        case "Practice 2":
+            specifiedType = DayType.Practice2;
+            break;
+        case "Practice 3":
+            specifiedType = DayType.Practice3;
+            break;
+        default:
+            throw new Error('The specified day type is not supported');
+    }
+
+    return specifiedType;
+}
+
+function getStageDayData(html: string): DayDetails[] {
+    if (html === undefined || html === null) {
+        throw new Error('No HTML provided');
+    }
+
+    const $ = cheerio.load(html);
+    const raceDetails: cheerio.Cheerio = $('.f1-timetable--row.f1-bg--white.expandable');
+    const days: DayDetails[] = [];
+
+    raceDetails.each((i, element) => {
+        const title = $(element).find('.f1-timetable--title').text();
+        const day = parseInt($(element).find(".f1-timetable--day").text());
+        const month = $(element).find('.f1-timetable--month.f1-bg--gray2.f1-label.f1-color--gray5').text();
+
+        days.push({
+            date: getRaceDay(day, month, 2022),
+            type: getDayType(title),
+        })
+    });
+
+    return days;
+}
